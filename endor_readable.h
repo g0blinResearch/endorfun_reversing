@@ -149,6 +149,14 @@ typedef struct {
     char* filename;
     int line_number;
 } memory_block;
+// 3D Vector structure
+typedef struct {
+    float x, y, z;
+} Vector3D;
+// 4x4 Matrix structure
+typedef struct {
+    float m[4][4];
+} Matrix4x4;
 
 // ========================================================================
 // GLOBAL VARIABLE DECLARATIONS
@@ -284,6 +292,35 @@ int save_game_state();
 int load_game_state();
 int show_save_dialog();
 HWND create_level_list();
+// ========================================================================
+// MATH AND VECTOR FUNCTION PROTOTYPES
+// ========================================================================
+
+/**
+ * Vector operations
+ */
+Vector3D vector_add(const Vector3D* a, const Vector3D* b);
+Vector3D vector_subtract(const Vector3D* a, const Vector3D* b);
+Vector3D vector_scale(const Vector3D* v, float scalar);
+float vector_dot_product(const Vector3D* a, const Vector3D* b);
+Vector3D vector_cross_product(const Vector3D* a, const Vector3D* b);
+float vector_magnitude(const Vector3D* v);
+Vector3D vector_normalize(const Vector3D* v);
+
+/**
+ * Matrix operations
+ */
+Vector3D matrix_vector_multiply(const Matrix4x4* m, const Vector3D* v);
+Matrix4x4 matrix_multiply(const Matrix4x4* a, const Matrix4x4* b);
+Matrix4x4 build_view_matrix(const Vector3D* position, const Vector3D* target, const Vector3D* up);
+Matrix4x4 build_projection_matrix(float fov, float aspect, float near_plane, float far_plane);
+Matrix4x4 build_scale_matrix(float x, float y, float z);
+Matrix4x4 build_rotation_matrix_x(float angle);
+Matrix4x4 build_rotation_matrix_y(float angle);
+Matrix4x4 build_rotation_matrix_z(float angle);
+Matrix4x4 build_translation_matrix(float x, float y, float z);
+float edge_function(Vector3D* a, Vector3D* b, Vector3D* c);
+void generate_mipmaps(void* texture);
 
 // ========================================================================
 // AUDIO SYSTEM FUNCTION PROTOTYPES
@@ -481,5 +518,185 @@ extern int sub_41ed46();
             /* Handle file error */ \
         } \
     } while(0)
+
+// ========================================================================
+// IMPROVED MODULE TYPE DEFINITIONS
+// ========================================================================
+
+/**
+ * Graphics System Types
+ */
+typedef struct {
+    float m[4][4];
+} Matrix4x4;
+
+typedef struct {
+    int type;  // 0=directional, 1=point, 2=spot, 3=area
+    float position[3];
+    float direction[3];
+    float color[3];
+    float intensity;
+    float range;
+    float spot_angle;
+    float spot_softness;
+    int cast_shadows;
+} Light;
+
+typedef enum {
+    RENDER_STATE_ALPHA_BLEND,
+    RENDER_STATE_DEPTH_TEST,
+    RENDER_STATE_DEPTH_WRITE,
+    RENDER_STATE_CULL_MODE,
+    RENDER_STATE_WIREFRAME,
+    RENDER_STATE_LIGHTING,
+    RENDER_STATE_FOG,
+    RENDER_STATE_TEXTURE_FILTER,
+    RENDER_STATE_BLEND_MODE,
+    RENDER_STATE_STENCIL_TEST
+} RenderState;
+
+/**
+ * Input System Types
+ */
+typedef enum {
+    MOUSE_MODE_ABSOLUTE,
+    MOUSE_MODE_RELATIVE,
+    MOUSE_MODE_CAPTURED,
+    MOUSE_MODE_HIDDEN
+} MouseMode;
+
+typedef enum {
+    GAMEPAD_AXIS_LEFT_X,
+    GAMEPAD_AXIS_LEFT_Y,
+    GAMEPAD_AXIS_RIGHT_X,
+    GAMEPAD_AXIS_RIGHT_Y,
+    GAMEPAD_AXIS_LEFT_TRIGGER,
+    GAMEPAD_AXIS_RIGHT_TRIGGER
+} GamepadAxis;
+
+typedef enum {
+    GAMEPAD_BUTTON_A,
+    GAMEPAD_BUTTON_B,
+    GAMEPAD_BUTTON_X,
+    GAMEPAD_BUTTON_Y,
+    GAMEPAD_BUTTON_LEFT_BUMPER,
+    GAMEPAD_BUTTON_RIGHT_BUMPER,
+    GAMEPAD_BUTTON_BACK,
+    GAMEPAD_BUTTON_START,
+    GAMEPAD_BUTTON_LEFT_STICK,
+    GAMEPAD_BUTTON_RIGHT_STICK,
+    GAMEPAD_BUTTON_DPAD_UP,
+    GAMEPAD_BUTTON_DPAD_DOWN,
+    GAMEPAD_BUTTON_DPAD_LEFT,
+    GAMEPAD_BUTTON_DPAD_RIGHT
+} GamepadButton;
+
+typedef struct {
+    int key_count;
+    int keys[8];
+    int modifier_mask;  // Shift, Ctrl, Alt flags
+    float time_window;  // Maximum time between key presses
+} InputCombo;
+
+/**
+ * Game Logic Types
+ */
+typedef enum {
+    POWERUP_HEALTH,
+    POWERUP_SHIELD,
+    POWERUP_SPEED,
+    POWERUP_DAMAGE,
+    POWERUP_INVINCIBILITY,
+    POWERUP_EXTRA_LIFE,
+    POWERUP_WEAPON_UPGRADE,
+    POWERUP_SCORE_MULTIPLIER
+} PowerupType;
+
+typedef void (*EventHandler)(const char* event_name, void* event_data);
+
+typedef struct {
+    int total_score;
+    int enemies_defeated;
+    int powerups_collected;
+    int levels_completed;
+    float total_playtime;
+    float average_fps;
+    int deaths;
+    int shots_fired;
+    int shots_hit;
+    float accuracy;
+} GameStatistics;
+
+/**
+ * Network System Types
+ */
+typedef struct {
+    int client_id;
+    char player_name[64];
+    char ip_address[46];  // IPv6 support
+    int ping_ms;
+    int connected;
+    float connection_time;
+    int bytes_sent;
+    int bytes_received;
+} ClientInfo;
+
+typedef enum {
+    NETWORK_EVENT_CLIENT_CONNECTED,
+    NETWORK_EVENT_CLIENT_DISCONNECTED,
+    NETWORK_EVENT_MESSAGE_RECEIVED,
+    NETWORK_EVENT_CONNECTION_LOST,
+    NETWORK_EVENT_SERVER_FULL,
+    NETWORK_EVENT_KICKED,
+    NETWORK_EVENT_BANNED,
+    NETWORK_EVENT_VOICE_DATA
+} NetworkEventType;
+
+typedef void (*NetworkCallback)(NetworkEventType type, int client_id, void* data);
+
+typedef struct {
+    int packets_sent;
+    int packets_received;
+    int packets_lost;
+    float packet_loss_percentage;
+    int bytes_sent;
+    int bytes_received;
+    float average_ping;
+    float min_ping;
+    float max_ping;
+    int current_connections;
+    float uptime;
+} NetworkStatistics;
+
+/**
+ * Level Editor Types
+ */
+typedef enum {
+    EDITOR_OBJ_STATIC_MESH,
+    EDITOR_OBJ_LIGHT,
+    EDITOR_OBJ_SPAWN_POINT,
+    EDITOR_OBJ_TRIGGER,
+    EDITOR_OBJ_PARTICLE_EMITTER,
+    EDITOR_OBJ_AUDIO_SOURCE,
+    EDITOR_OBJ_WAYPOINT,
+    EDITOR_OBJ_CAMERA,
+    EDITOR_OBJ_DECAL,
+    EDITOR_OBJ_VOLUME,
+    EDITOR_OBJ_SPLINE,
+    EDITOR_OBJ_PREFAB_INSTANCE
+} EditorObjectType;
+
+typedef enum {
+    ASSET_TYPE_TEXTURE,
+    ASSET_TYPE_MODEL,
+    ASSET_TYPE_SOUND,
+    ASSET_TYPE_SCRIPT,
+    ASSET_TYPE_MATERIAL,
+    ASSET_TYPE_PREFAB,
+    ASSET_TYPE_ANIMATION,
+    ASSET_TYPE_SHADER,
+    ASSET_TYPE_PARTICLE,
+    ASSET_TYPE_FONT
+} AssetType;
 
 #endif /* ENDOR_READABLE_H */
